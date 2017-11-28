@@ -34,6 +34,11 @@
     git:
       repo: https://github.com/fireice-uk/xmr-stak-cpu.git
       dest: /root/xmr-stak-cpu
+  - name: set donation level to 0.0
+    lineinfile:
+      dest: /root/xmr-stak-cpu/donate-level.h
+      regexp: 'fDevDonationLevel'
+      line: 'constexpr double fDevDonationLevel = 0.0 / 100.0;'
   - name: build xmr-stak from source
     shell: |
       source /opt/rh/devtoolset-4/enable
