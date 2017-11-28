@@ -1,0 +1,13 @@
+[Unit]
+Description=XMR CPU Miner
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/run/xmr-stak-cpu.pid
+ExecStart=/usr/local/bin/xmr-stak-cpu -c /usr/local/bin/config.txt
+ExecReload=/sbin/start-stop-daemon
+
+[Install]
+WantedBy=multi-user.target
+
