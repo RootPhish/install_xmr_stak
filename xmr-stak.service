@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-PIDFile=/run/xmr-stak-cpu.pid
-ExecStart=/usr/local/bin/xmr-stak-cpu -c /usr/local/bin/config.txt
+PIDFile=/run/xmr-stak.pid
+ExecStart=/usr/local/bin/xmr-stak -c /usr/local/bin/config.txt --cpu /usr/local/bin/cpu.txt
 ExecReload=/sbin/start-stop-daemon
 
 [Install]
