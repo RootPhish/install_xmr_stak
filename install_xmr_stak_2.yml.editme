@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: install
   remote_user: root
   tasks:
   - name: stop and disable firewall
@@ -30,22 +30,26 @@
     yum:
       name: devtoolset-4-gcc*
       state: present
+  - name: remove previously cloned git
+    file:
+      state: absent
+      path: "/root/xmr-stak/"
   - name: clone xmr-stak source
     git:
-      repo: https://github.com/fireice-uk/xmr-stak-cpu.git
-      dest: /root/xmr-stak-cpu
+      repo: https://github.com/fireice-uk/xmr-stak.git
+      dest: /root/xmr-stak
   - name: set donation level to 0.0
     lineinfile:
-      dest: /root/xmr-stak-cpu/donate-level.h
+      dest: /root/xmr-stak/xmrstak/donate-level.hpp
       regexp: 'fDevDonationLevel'
       line: 'constexpr double fDevDonationLevel = 0.0 / 100.0;'
   - name: build xmr-stak from source
     shell: |
       source /opt/rh/devtoolset-4/enable
-      cmake3 .
+      cmake3 -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF .
       make install
     args:
-      chdir: /root/xmr-stak-cpu
+      chdir: /root/xmr-stak
   - name: set limits
     lineinfile:
       dest: /etc/security/limits.conf
@@ -54,17 +58,25 @@
     - '* soft memlock 262144'
     - '* hard memlock 262144'
   - name: enable huge pages
-    shell: sysctl -w vm.nr_hugepages=128
+    lineinfile:
+      dest: /etc/sysctl.conf
+      line: vm.nr_hugepages=128
+  - name: reload sysctl
+    shell: sysctl -p
   - name: move binaries
-    shell: mv /root/xmr-stak-cpu/bin/* /usr/local/bin/
+    shell: mv /root/xmr-stak/bin/* /usr/local/bin/
+  - name: copy config file
+    copy:
+      src: config.txt
+      dest: /usr/local/bin/config.txt
   - name: update config file
     lineinfile:
       dest: /usr/local/bin/config.txt
       regexp: "{{ item.regexp }}"
       line: "{{ item.line }}"
+      backrefs: yes
     with_items:
-    - { regexp: '^"pool_address"', line: '"pool_address": "xmr-eu1.nanopool.org:14444",' }
-    - { regexp: '^"wallet_address"', line: '"wallet_address": "<wallet>.{{ansible_hostname}}/<email>",' }
+    - { regexp: '(.*"pool_address" : ").*(", "wallet_address" : ").*(", "pool_password.*)', line: '\1etn-eu1.nanopool.org:13333\2<wallet>.{{ansible_hostname}}/<email>\3' }
     - { regexp: '^"httpd_port"', line: '"httpd_port": 8080,' }
     - { regexp: '^"daemon_mode"', line: '"daemon_mode": true,' }
   - name: copy unit file
